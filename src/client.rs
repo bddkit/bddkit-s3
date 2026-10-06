@@ -219,7 +219,7 @@ mod tests {
 
     #[test]
     fn a_bucket_is_built_without_opening_a_connection() {
-        // No MinIO is running in a unit test. Construction must still succeed:
+        // No server is running in a unit test. Construction must still succeed:
         // `init_instance` is where connections would be opened, and nothing
         // here opens one.
         let instance = Instance::connect(&cfg(UrlStyle::Path)).expect("built");

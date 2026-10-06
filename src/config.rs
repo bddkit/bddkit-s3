@@ -291,7 +291,7 @@ mod tests {
         assert_eq!(
             InstanceConfig::parse(&body("")).expect("valid").url_style,
             UrlStyle::Path,
-            "path is the default, because the suite's own MinIO serves that form"
+            "path is the default, because MinIO and the suite's own Garage serve that form"
         );
         assert_eq!(
             InstanceConfig::parse(&body(r#"{"url_style": "path"}"#))

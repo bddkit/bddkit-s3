@@ -1,6 +1,6 @@
 //! The end-to-end suite for this plugin: the real `bddkit` binary, this
-//! crate's own `cdylib`, and a real MinIO from `docker-compose.yml`.
-//! Needs `docker compose up minio-init` first.
+//! crate's own `cdylib`, and a real S3 server (Garage) from `docker-compose.yml`.
+//! Needs `docker compose up --wait garage` first.
 //!
 //! `bddkit` is the external dependency here (this repository ships only the
 //! plugin), so these tests skip themselves — printing why, rather than
@@ -29,11 +29,11 @@ fn bucket() -> String {
 }
 
 fn access_key() -> String {
-    std::env::var("BDDKIT_S3_ACCESS_KEY").unwrap_or_else(|_| "bddkit".to_string())
+    std::env::var("BDDKIT_S3_ACCESS_KEY").unwrap_or_else(|_| "bddkit-access".to_string())
 }
 
 fn secret_key() -> String {
-    std::env::var("BDDKIT_S3_SECRET_KEY").unwrap_or_else(|_| "bddkit-secret".to_string())
+    std::env::var("BDDKIT_S3_SECRET_KEY").unwrap_or_else(|_| "bddkit-secret-key".to_string())
 }
 
 /// Resolves the `bddkit` binary to run against: `BDDKIT_BIN` env var, then
@@ -196,10 +196,10 @@ fn host_has_subcommands(bin: &Path) -> bool {
     host_help(bin).contains("Commands:")
 }
 
-/// THE GATE from issue #10: a scenario uploads an object to MinIO and asserts
+/// THE GATE from issue #10: a scenario uploads an object to the bucket and asserts
 /// it is present, with the plugin loaded from a hand-written lock file.
 #[test]
-fn an_object_uploaded_to_minio_is_found_there() {
+fn an_uploaded_object_is_found_in_the_bucket() {
     let bin = require_bddkit!();
     let feature = r#"Feature: S3 upload
   Scenario: an uploaded object is in the bucket
@@ -225,7 +225,7 @@ fn an_object_uploaded_to_minio_is_found_there() {
 /// steps, which is the only place the plugin layer and the built-in layer are
 /// shown working inside one scenario.
 #[test]
-fn the_rest_of_the_vocabulary_works_against_minio() {
+fn the_rest_of_the_vocabulary_works_against_a_real_server() {
     let bin = require_bddkit!();
     let feature = r#"Feature: S3 vocabulary
   Background:
