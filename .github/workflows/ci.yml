@@ -52,7 +52,7 @@ jobs:
   # manifest by unit tests, and the probe by the step below, which needs the
   # server rather than the host.
   e2e:
-    name: e2e against MinIO
+    name: e2e against Garage
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -65,10 +65,10 @@ jobs:
       - name: Install bddkit
         run: cargo install bddkit --version 0.1.1 --locked
 
-      # Foreground on purpose: `up -d` returns when the containers start, not
-      # when the one-shot bucket creation has finished.
-      - name: Start MinIO
-        run: docker compose up minio-init
+      # --wait returns once the healthcheck passes, and Garage creates the
+      # bucket before it starts serving, so the bucket exists by then.
+      - name: Start Garage
+        run: docker compose up --wait garage
 
       - name: End-to-end tests
         run: cargo test --locked --test e2e
@@ -79,10 +79,10 @@ jobs:
       # the probe's 2xx, 403 and 404 branches — the three messages the feature
       # exists to produce — are actually executed. Same credentials as
       # docker-compose.yml.
-      - name: Probe against MinIO
+      - name: Probe against Garage
         env:
           BDDKIT_S3_ENDPOINT: http://localhost:9000
           BDDKIT_S3_BUCKET: apibdd-it
-          BDDKIT_S3_ACCESS_KEY: bddkit
-          BDDKIT_S3_SECRET_KEY: bddkit-secret
+          BDDKIT_S3_ACCESS_KEY: bddkit-access
+          BDDKIT_S3_SECRET_KEY: bddkit-secret-key
         run: cargo test --locked --lib probe

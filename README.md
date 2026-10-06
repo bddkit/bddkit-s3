@@ -42,8 +42,8 @@ resources:
     main:
       endpoint: http://localhost:9000
       bucket: apibdd-it
-      access_key: bddkit
-      secret_key: bddkit-secret
+      access_key: bddkit-access
+      secret_key: bddkit-secret-key
       # optional:
       # region: us-east-1        (default)
       # url_style: path          (default; "virtual-hosted" puts the bucket in a subdomain)
@@ -138,12 +138,13 @@ Unit tests need no external services:
 cargo test --lib
 ```
 
-The end-to-end suite needs a `bddkit` binary and MinIO. Any release from
+The end-to-end suite needs a `bddkit` binary and an S3 server; `docker-compose.yml`
+runs [Garage](https://garagehq.deuxfleurs.fr/). Any release from
 0.1.1 on carries the plugin ABI, so the host comes from crates.io:
 
 ```bash
 cargo install bddkit --version 0.1.1 --locked
-docker compose up minio-init
+docker compose up --wait garage
 cargo test --test e2e
 ```
 
