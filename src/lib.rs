@@ -101,7 +101,7 @@ fn steps_json() -> String {
 
 #[unsafe(no_mangle)]
 pub extern "C" fn bddkit_abi_version() -> u32 {
-    1
+    2
 }
 
 #[unsafe(no_mangle)]

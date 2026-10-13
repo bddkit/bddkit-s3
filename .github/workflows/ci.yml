@@ -63,7 +63,7 @@ jobs:
           rustflags: ""
 
       - name: Install bddkit
-        run: cargo install bddkit --version 0.1.1 --locked
+        run: cargo install bddkit --version 0.3.0 --locked
 
       # --wait returns once the healthcheck passes, and Garage creates the
       # bucket before it starts serving, so the bucket exists by then.
