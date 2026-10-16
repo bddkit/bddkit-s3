@@ -254,6 +254,17 @@ pub unsafe extern "C" fn bddkit_free_string(s: *mut c_char) {
 #[cfg(test)]
 mod tests {
     #[test]
+    fn bddkit_plugin_json_declares_the_abi_the_library_reports() {
+        let declared: serde_json::Value =
+            serde_json::from_str(include_str!("../bddkit-plugin.json")).expect("valid JSON");
+        assert_eq!(
+            declared["abi"],
+            crate::bddkit_abi_version(),
+            "bddkit-plugin.json must name the ABI bddkit_abi_version() returns"
+        );
+    }
+
+    #[test]
     fn the_manifest_claims_the_s3_group_and_is_shared() {
         let raw = crate::manifest_json();
         let v: serde_json::Value = serde_json::from_str(&raw).expect("manifest is JSON");
