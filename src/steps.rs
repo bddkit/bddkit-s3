@@ -74,14 +74,14 @@ pub struct Headers {
 /// 0 itself is (a degenerate table), so cells are read with `.first()`/`.get()`
 /// rather than indexed. A missing cell reads as an empty string, which then
 /// fails the name check below — an error, never a panic.
-pub fn headers_from(table: &Option<Vec<Vec<String>>>) -> Result<Headers, String> {
+pub fn headers_from(table: Option<&[Vec<String>]>) -> Result<Headers, String> {
     let mut headers = Headers::default();
     let Some(rows) = table else {
         return Ok(headers);
     };
     for row in rows.iter().skip(1) {
-        let name = row.first().map(|s| s.trim()).unwrap_or("");
-        let value = row.get(1).map(String::as_str).unwrap_or("");
+        let name = row.first().map_or("", |s| s.trim());
+        let value = row.get(1).map_or("", String::as_str);
         match name {
             "content-type" => headers.content_type = Some(value.to_string()),
             other if other.starts_with("meta:") => headers
@@ -160,7 +160,7 @@ fn read_local(path: &std::path::Path) -> Result<Vec<u8>, String> {
 }
 
 fn upload_fixture(instance: &Instance, request: &Request) -> Result<String, String> {
-    let path = files::fixture(&instance.fixtures_dir, request.arg(0)?);
+    let path = files::fixture(instance.fixtures_dir.as_deref(), request.arg(0)?);
     let body = read_local(&path)?;
     put(
         instance,
@@ -172,9 +172,9 @@ fn upload_fixture(instance: &Instance, request: &Request) -> Result<String, Stri
 }
 
 fn upload_fixture_with_headers(instance: &Instance, request: &Request) -> Result<String, String> {
-    let path = files::fixture(&instance.fixtures_dir, request.arg(0)?);
+    let path = files::fixture(instance.fixtures_dir.as_deref(), request.arg(0)?);
     let body = read_local(&path)?;
-    let headers = headers_from(&request.table)?;
+    let headers = headers_from(request.table.as_deref())?;
     put(instance, request.arg(1)?, &body, &headers, &request.ctx)
 }
 
@@ -212,7 +212,7 @@ fn download_to_var(instance: &Instance, request: &Request) -> Result<String, Str
     }
     let text = String::from_utf8(body)
         .map_err(|_| format!("{key} is not UTF-8; use `I save \"{key}\" as \"…\"` instead"))?;
-    Ok(passed_with(serde_json::json!({ name: text })))
+    Ok(passed_with(&serde_json::json!({ name: text })))
 }
 
 fn save_to_workspace(instance: &Instance, request: &Request) -> Result<String, String> {
@@ -264,7 +264,7 @@ fn read_field(instance: &Instance, request: &Request) -> Result<String, String> 
             .and_then(|m| m.get(&other["meta:".len()..]).cloned())
             .unwrap_or_default(),
     };
-    Ok(passed_with(serde_json::json!({ name: value })))
+    Ok(passed_with(&serde_json::json!({ name: value })))
 }
 
 fn delete_object(instance: &Instance, request: &Request) -> Result<String, String> {
@@ -554,7 +554,7 @@ fn delete_prefix(instance: &Instance, request: &Request) -> Result<String, Strin
 fn count_prefix(instance: &Instance, request: &Request) -> Result<String, String> {
     let (prefix, name) = (request.arg(0)?, request.arg(1)?);
     let count = keys_under(instance, prefix)?.len();
-    Ok(passed_with(serde_json::json!({ name: count.to_string() })))
+    Ok(passed_with(&serde_json::json!({ name: count.to_string() })))
 }
 
 fn count_should_be(instance: &Instance, request: &Request) -> Result<String, String> {
@@ -608,7 +608,7 @@ fn presign(instance: &Instance, request: &Request) -> Result<String, String> {
         other => return Err(format!("cannot presign a {other} url; use GET or PUT")),
     }
     .map_err(|e| format!("cannot presign {key}: {e}"))?;
-    Ok(passed_with(serde_json::json!({ name: url })))
+    Ok(passed_with(&serde_json::json!({ name: url })))
 }
 
 /// 401 and 403 both mean "the server refused", and which one MinIO sends
@@ -781,7 +781,7 @@ mod tests {
             vec!["content-type".to_string(), "application/pdf".to_string()],
             vec!["meta:owner".to_string(), "alice".to_string()],
         ];
-        let headers = super::headers_from(&Some(table)).expect("parsed");
+        let headers = super::headers_from(Some(table.as_slice())).expect("parsed");
         assert_eq!(headers.content_type.as_deref(), Some("application/pdf"));
         assert_eq!(
             headers.metadata,
@@ -795,7 +795,7 @@ mod tests {
             vec!["name".to_string(), "value".to_string()],
             vec!["cache-control".to_string(), "no-store".to_string()],
         ];
-        let error = super::headers_from(&Some(table)).expect_err("refused");
+        let error = super::headers_from(Some(table.as_slice())).expect_err("refused");
         assert!(error.contains("cache-control"), "{error}");
     }
 

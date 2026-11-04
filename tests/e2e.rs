@@ -15,6 +15,13 @@
 //! host that reads them — the field listing, the clean probe, and the
 //! unreachable endpoint — and say so and skip when it does not.
 
+#![allow(
+    clippy::expect_used,
+    clippy::unwrap_used,
+    clippy::panic,
+    reason = "`allow-*-in-tests` covers only `#[test]` functions, not the helpers here"
+)]
+
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
