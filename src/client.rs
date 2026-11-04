@@ -276,8 +276,8 @@ mod tests {
         let endpoint = format!("http://{}", listener.local_addr().expect("addr"));
         std::thread::spawn(move || {
             for stream in listener.incoming().take(4) {
-                let Ok(mut stream) = stream else { continue };
                 use std::io::Write;
+                let Ok(mut stream) = stream else { continue };
                 let _ = stream.write_all(
                     b"HTTP/1.1 301 Moved Permanently\r\n\
                       x-amz-bucket-region: us-west-1\r\n\

@@ -45,7 +45,7 @@ pub fn in_workspace(workspace_dir: &str, name: &str) -> Result<PathBuf, String> 
 /// A prepared file. A relative path resolves against `fixtures_dir` when the
 /// instance declares one, and against the process working directory otherwise;
 /// an absolute path is used as given.
-pub fn fixture(fixtures_dir: &Option<String>, path: &str) -> PathBuf {
+pub fn fixture(fixtures_dir: Option<&str>, path: &str) -> PathBuf {
     let path = Path::new(path);
     match fixtures_dir {
         Some(dir) if path.is_relative() => Path::new(dir).join(path),
@@ -99,19 +99,19 @@ mod tests {
 
     #[test]
     fn a_fixture_path_resolves_against_fixtures_dir() {
-        let path = fixture(&Some("features/files".to_string()), "report.pdf");
+        let path = fixture(Some("features/files"), "report.pdf");
         assert_eq!(path, std::path::Path::new("features/files/report.pdf"));
     }
 
     #[test]
     fn an_absolute_fixture_path_is_used_as_given() {
-        let path = fixture(&Some("features/files".to_string()), "/data/report.pdf");
+        let path = fixture(Some("features/files"), "/data/report.pdf");
         assert_eq!(path, std::path::Path::new("/data/report.pdf"));
     }
 
     #[test]
     fn without_fixtures_dir_a_relative_path_is_left_relative() {
-        let path = fixture(&None, "features/files/report.pdf");
+        let path = fixture(None, "features/files/report.pdf");
         assert_eq!(path, std::path::Path::new("features/files/report.pdf"));
     }
 }

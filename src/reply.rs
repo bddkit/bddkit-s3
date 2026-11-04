@@ -95,7 +95,7 @@ pub fn passed() -> String {
     r#"{"status":"passed"}"#.to_string()
 }
 
-pub fn passed_with(vars: serde_json::Value) -> String {
+pub fn passed_with(vars: &serde_json::Value) -> String {
     serde_json::json!({"status": "passed", "vars": vars}).to_string()
 }
 
@@ -136,7 +136,7 @@ mod tests {
 
     #[test]
     fn a_passed_reply_carries_vars_and_no_diagnostics() {
-        let raw = passed_with(serde_json::json!({"etag": "abc"}));
+        let raw = passed_with(&serde_json::json!({"etag": "abc"}));
         let v: serde_json::Value = serde_json::from_str(&raw).expect("JSON");
         assert_eq!(v["status"], "passed");
         assert_eq!(v["vars"]["etag"], "abc");

@@ -11,7 +11,7 @@ use std::collections::HashMap;
 use std::ffi::{CStr, CString, c_char};
 use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, MutexGuard};
 
 /// A handle is an index into this table, never a pointer.
 /// Instances are held behind `Arc` so a step never runs while this lock is
@@ -23,14 +23,22 @@ static INSTANCES: Mutex<Option<HashMap<u64, Arc<client::Instance>>>> = Mutex::ne
 static NEXT_HANDLE: AtomicU64 = AtomicU64::new(1);
 
 /// Outside `guard`, and safe there only because it provably cannot panic:
-/// `CString::new` returns a `Result` and the fallback literal has no interior
-/// NUL. Anything added here must keep that property.
+/// `CString::new` returns a `Result` and the fallback is a `c""` literal, whose
+/// lack of an interior NUL the compiler checks. Anything added here must keep
+/// that property.
 fn out(s: String) -> *mut c_char {
     CString::new(s)
-        .unwrap_or_else(|_| {
-            CString::new("{\"ok\":false,\"error\":\"NUL in reply\"}").expect("literal")
-        })
+        .unwrap_or_else(|_| c"{\"ok\":false,\"error\":\"NUL in reply\"}".to_owned())
         .into_raw()
+}
+
+/// Inside `guard` at every call site.
+#[expect(
+    clippy::expect_used,
+    reason = "a mutex is poisoned only if a holder panicked, no holder of `INSTANCES` runs a step, and `guard` turns this panic into a reply"
+)]
+fn locked<T>(mutex: &Mutex<T>) -> MutexGuard<'_, T> {
+    mutex.lock().expect("a holder panicked")
 }
 
 /// Inside `guard` at every call site.
@@ -38,6 +46,10 @@ fn input(p: *const c_char) -> String {
     if p.is_null() {
         return String::new();
     }
+    // SAFETY: `p` is not null, checked above. Every caller passes the request
+    // argument of an export, which the ABI defines as a NUL-terminated string
+    // the host keeps valid for the whole call. The borrow ends at `into_owned`,
+    // before this returns.
     unsafe { CStr::from_ptr(p) }.to_string_lossy().into_owned()
 }
 
@@ -187,9 +199,7 @@ pub extern "C" fn bddkit_init_instance(request: *const c_char) -> *mut c_char {
             Err(error) => return serde_json::json!({"ok": false, "error": error}).to_string(),
         };
         let handle = NEXT_HANDLE.fetch_add(1, Ordering::SeqCst);
-        INSTANCES
-            .lock()
-            .expect("instances")
+        locked(&INSTANCES)
             .get_or_insert_with(HashMap::new)
             .insert(handle, Arc::new(instance));
         serde_json::json!({"ok": true, "handle": handle}).to_string()
@@ -203,9 +213,7 @@ pub extern "C" fn bddkit_init_instance(request: *const c_char) -> *mut c_char {
 #[unsafe(no_mangle)]
 pub extern "C" fn bddkit_drop_instance(handle: u64) -> *mut c_char {
     guard("envelope", move || {
-        INSTANCES
-            .lock()
-            .expect("instances")
+        locked(&INSTANCES)
             .get_or_insert_with(HashMap::new)
             .remove(&handle);
         r#"{"ok":true}"#.to_string()
@@ -232,7 +240,7 @@ pub extern "C" fn bddkit_dispatch(
         // serialise every parallel feature file behind this single mutex and
         // let a panic mid-step poison it for the rest of the run.
         let instance = {
-            let mut table = INSTANCES.lock().expect("instances");
+            let mut table = locked(&INSTANCES);
             table.get_or_insert_with(HashMap::new).get(&handle).cloned()
         };
         let Some(instance) = instance else {
@@ -247,6 +255,9 @@ pub extern "C" fn bddkit_dispatch(
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn bddkit_free_string(s: *mut c_char) {
     if !s.is_null() {
+        // SAFETY: `s` is not null, checked above. By this function's contract it
+        // is a live reply of this library, and `out`, the only producer of
+        // replies, makes each one with `CString::into_raw`.
         drop(unsafe { CString::from_raw(s) });
     }
 }
@@ -391,9 +402,12 @@ mod config_contract_tests {
             !reply.is_null(),
             "returning NULL is an error in the contract"
         );
+        // SAFETY: `reply` is not null, asserted above, and is the NUL-terminated
+        // string `out` made, not freed until below. `text` owns a copy.
         let text = unsafe { std::ffi::CStr::from_ptr(reply) }
             .to_string_lossy()
             .into_owned();
+        // SAFETY: `reply` came from this library and is freed only here.
         unsafe { crate::bddkit_free_string(reply) };
         serde_json::from_str(&text).expect("the reply is JSON")
     }
@@ -409,9 +423,13 @@ mod config_contract_tests {
         let validated = {
             let c = std::ffi::CString::new(request).expect("no NUL");
             let reply = crate::bddkit_validate_config(c.as_ptr());
+            // SAFETY: the export answers with `out`, whose `CString::into_raw`
+            // is never null and whose string is not freed until below. `text`
+            // owns a copy.
             let text = unsafe { std::ffi::CStr::from_ptr(reply) }
                 .to_string_lossy()
                 .into_owned();
+            // SAFETY: `reply` came from this library and is freed only here.
             unsafe { crate::bddkit_free_string(reply) };
             serde_json::from_str::<Value>(&text).expect("JSON")
         };
@@ -472,7 +490,7 @@ mod config_contract_tests {
                 .lock()
                 .expect("instances")
                 .as_ref()
-                .is_none_or(|table| table.is_empty()),
+                .is_none_or(std::collections::HashMap::is_empty),
             "the probe must not store the client it built"
         );
     }
