@@ -33,6 +33,7 @@ jobs:
 
       - name: File size budget
         run: |
+          files=$(git ls-files '*.rs' '*.feature' '*.yaml' '*.yml' ':!.github/')
           status=0
           while IFS= read -r file; do
             lines=$(wc -l < "$file")
@@ -40,7 +41,7 @@ jobs:
               echo "::error file=$file::$lines lines, the limit is 1000"
               status=1
             fi
-          done < <(git ls-files '*.rs' '*.feature' '*.yaml' '*.yml' ':!.github/')
+          done <<< "$files"
           exit "$status"
 
       - name: Clippy

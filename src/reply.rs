@@ -10,7 +10,10 @@ pub struct Ctx {
     pub artifacts_dir: String,
     pub workspace_dir: String,
     // Read only once later tasks implement debug-mode SQL/HTTP dumping.
-    #[allow(dead_code)]
+    #[expect(
+        dead_code,
+        reason = "parsed from the request, but nothing reads it yet"
+    )]
     pub debug: bool,
 }
 

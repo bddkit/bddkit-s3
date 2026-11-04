@@ -47,9 +47,9 @@ fn input(p: *const c_char) -> String {
         return String::new();
     }
     // SAFETY: `p` is not null, checked above. Every caller passes the request
-    // argument of an export, which the ABI defines as a NUL-terminated string
-    // the host keeps valid for the whole call. The borrow ends at `into_owned`,
-    // before this returns.
+    // argument of an export: a C string, so NUL-terminated, that the host owns
+    // and keeps valid for the whole call (`docs/plugin-authoring.md`, section
+    // 3). The borrow ends at `into_owned`, before this returns.
     unsafe { CStr::from_ptr(p) }.to_string_lossy().into_owned()
 }
 
@@ -257,7 +257,9 @@ pub unsafe extern "C" fn bddkit_free_string(s: *mut c_char) {
     if !s.is_null() {
         // SAFETY: `s` is not null, checked above. By this function's contract it
         // is a live reply of this library, and `out`, the only producer of
-        // replies, makes each one with `CString::into_raw`.
+        // replies, makes each one with `CString::into_raw`. The host only copies
+        // a reply before handing it back (`docs/plugin-authoring.md`, section
+        // 3), so the string is unchanged and `from_raw` finds the same length.
         drop(unsafe { CString::from_raw(s) });
     }
 }
