@@ -93,7 +93,7 @@ macro_rules! require_bddkit {
                 eprintln!(
                     "SKIP: bddkit binary not available — looked for {}. \
                      Set BDDKIT_BIN to its path, put bddkit on PATH, or check \
-                     out sergeym/bddkit as a sibling of this repository and \
+                     out bddkit/bddkit as a sibling of this repository and \
                      `cargo build` it.",
                     sibling_bins_listed()
                 );
