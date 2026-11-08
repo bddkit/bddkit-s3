@@ -139,11 +139,11 @@ cargo test --lib
 ```
 
 The end-to-end suite needs a `bddkit` binary and an S3 server; `docker-compose.yml`
-runs [Garage](https://garagehq.deuxfleurs.fr/). Any release from
-0.1.1 on carries the plugin ABI, so the host comes from crates.io:
+runs [Garage](https://garagehq.deuxfleurs.fr/). The host must speak plugin ABI 4;
+until bddkit 0.5.0 is released it comes from the candidate tag:
 
 ```bash
-cargo install bddkit --version 0.1.1 --locked
+cargo install --git https://github.com/bddkit/bddkit --tag v0.5.0-rc.2 --locked bddkit
 docker compose up --wait garage
 cargo test --test e2e
 ```

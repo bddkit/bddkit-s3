@@ -6,8 +6,8 @@
 //! plugin), so these tests skip themselves — printing why, rather than
 //! failing — when no usable binary can be found. See [`bddkit_bin`].
 //!
-//! Two hosts matter, and the suite is written to run against either. CI pins a
-//! published bddkit that predates the plugin config contract: it ignores the
+//! Two hosts matter, and the suite is written to run against either: a
+//! host that predates the plugin config contract ignores the
 //! manifest's `fields` and never resolves `bddkit_probe_config`, so the
 //! scenario tests below double as the proof that both additions stay backward
 //! compatible — a host that choked on either would fail to load the plugin at
@@ -309,7 +309,7 @@ fn host_help(bin: &Path) -> String {
         .unwrap_or_default()
 }
 
-/// False for the host CI pins, which predates the plugin config contract: it
+/// False for a host that predates the plugin config contract: it
 /// ignores the manifest's `fields` and never resolves `bddkit_probe_config`.
 /// Asked of the binary rather than of a version number, because a version says
 /// nothing about which commit it was cut from.

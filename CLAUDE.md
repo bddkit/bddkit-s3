@@ -2,7 +2,7 @@
 
 Agent orientation for this plugin repository.
 
-`bddkit-s3` is a plugin for `bddkit`, a Gherkin-based acceptance-testing tool in Rust: this plugin exposes S3-compatible object storage (AWS S3, MinIO, Garage, …). It is a `cdylib` loaded by the host at run time; resource group: `s3`; plugin ABI 3 (`bddkit-plugin.json`). `README.md` is the tester-facing description of the steps.
+`bddkit-s3` is a plugin for `bddkit`, a Gherkin-based acceptance-testing tool in Rust: this plugin exposes S3-compatible object storage (AWS S3, MinIO, Garage, …). It is a `cdylib` loaded by the host at run time; resource group: `s3`; plugin ABI 4 (`bddkit-plugin.json`). `README.md` is the tester-facing description of the steps.
 
 ## Where the contract lives
 
