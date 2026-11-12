@@ -152,10 +152,17 @@ fn project(name: &str, files: &[(&str, &str)]) -> PathBuf {
     for (file, body) in files {
         std::fs::write(dir.join("features").join(file), body).expect("write feature");
     }
+    // The configs declare an `api` resource (the presigned-url scenario drives
+    // the HTTP steps), and since bddkit 0.5.0 that group is served by the
+    // separate bddkit-api plugin, not the host.
+    let api = std::env::var("BDDKIT_API_PLUGIN").expect(
+        "BDDKIT_API_PLUGIN must name a bddkit-api plugin library \
+         (`bddkit plugin install bddkit/bddkit-api` puts one under the bddkit directory)",
+    );
     std::fs::write(
         dir.join(".bddkit/plugins.yaml"),
         format!(
-            "plugin:\n  - name: s3\n    path: {}\n",
+            "plugin:\n  - name: s3\n    path: {}\n  - name: api\n    path: {api}\n",
             build_plugin().display()
         ),
     )

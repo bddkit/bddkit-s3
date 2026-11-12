@@ -14,6 +14,8 @@ env:
   # its tag and never from a floating branch, so a red run means this plugin
   # broke. Raise it when a newer release is out.
   HOST_TAG: v0.5.0
+  # The bddkit-api release the e2e suite loads for its `api` resource.
+  API_TAG: 0.1.0
 
 jobs:
   test:
@@ -87,6 +89,17 @@ jobs:
           echo "$RUNNER_TEMP/bddkit-host/bin" >> "$GITHUB_PATH"
           exe=; [ "$RUNNER_OS" = Windows ] && exe=.exe
           echo "BDDKIT_BIN=$RUNNER_TEMP/bddkit-host/bin/bddkit$exe" >> "$GITHUB_ENV"
+
+      # The suite's configs declare an `api` resource, served by the bddkit-api
+      # plugin since 0.5.0: install it the way a user would and hand the tests
+      # its library.
+      - name: Install the api plugin
+        shell: bash
+        run: |
+          dir="$RUNNER_TEMP/api-plugin"
+          mkdir -p "$dir"
+          "$BDDKIT_BIN" plugin install "bddkit/bddkit-api@$API_TAG" --bddkit-dir "$dir"
+          echo "BDDKIT_API_PLUGIN=$dir/plugins/bddkit-api/$API_TAG/libbddkit_api.so" >> "$GITHUB_ENV"
 
       # --wait returns once the healthcheck passes, and Garage creates the
       # bucket before it starts serving, so the bucket exists by then.

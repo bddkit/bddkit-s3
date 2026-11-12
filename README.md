@@ -148,6 +148,8 @@ docker compose up --wait garage
 cargo test --test e2e
 ```
 
+The suite's configs declare an `api` resource, served by the `bddkit-api` plugin: install it (`bddkit plugin install bddkit/bddkit-api`) and set `BDDKIT_API_PLUGIN` to the `libbddkit_api` library it put under the bddkit directory.
+
 The binary is looked for in `$BDDKIT_BIN`, then on `PATH`, then in a sibling
 `../bddkit` checkout (release before debug) — set `BDDKIT_BIN` to test against a
 host you built yourself. The three tests that drive the section above through
