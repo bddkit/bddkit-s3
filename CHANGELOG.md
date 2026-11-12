@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.1](https://github.com/bddkit/bddkit-s3/compare/v0.4.0...v0.4.1) - 2026-11-12
+
+### Other
+
+- describe the plugin as of bddkit 0.5.0
+- load the bddkit-api plugin in the e2e suite
+- test against the released bddkit 0.5.0
+
 ## [0.4.0](https://github.com/bddkit/bddkit-s3/compare/v0.3.0...v0.4.0) - 2026-11-09
 
 ### Added
