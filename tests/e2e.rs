@@ -142,8 +142,8 @@ fn build_plugin() -> PathBuf {
     path
 }
 
-/// A throwaway project: config, feature files, and the hand-written lock file
-/// the P1 loader reads. `plugin install` is a later milestone.
+/// A throwaway project: config, feature files, and a hand-written lock file
+/// that points at this checkout's build.
 fn project(name: &str, files: &[(&str, &str)]) -> PathBuf {
     let dir = std::env::temp_dir().join(format!("bddkit-s3-e2e-{name}-{}", std::process::id()));
     let _ = std::fs::remove_dir_all(&dir);
@@ -235,8 +235,8 @@ fn an_uploaded_object_is_found_in_the_bucket() {
 }
 
 /// Everything the gate does not touch, in one run: metadata, listing,
-/// deletion, access refusal — and a presigned URL driven by bddkit's own HTTP
-/// steps, which is the only place the plugin layer and the built-in layer are
+/// deletion, access refusal — and a presigned URL driven by the HTTP steps of
+/// the `api` plugin, which is the only place this plugin and another one are
 /// shown working inside one scenario.
 #[test]
 fn the_rest_of_the_vocabulary_works_against_a_real_server() {
@@ -277,7 +277,7 @@ fn the_rest_of_the_vocabulary_works_against_a_real_server() {
     Then anonymous access to "<<p>>/c.txt" should be denied
     And a presigned url for "<<p>>/c.txt" with secret "wrong-secret" should be rejected
 
-  Scenario: a presigned url is honoured by the built-in HTTP steps
+  Scenario: a presigned url is honoured by the api plugin's HTTP steps
     Given I upload "<<p>>/d.txt" with:
       """
       delta

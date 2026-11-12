@@ -90,8 +90,8 @@ const FIELDS: &[Field] = &[
     Field {
         name: "fixtures_dir",
         required: false,
-        description: "base directory the `upload file` steps resolve a local path against; \
-                      required only by those steps",
+        description: "base directory the `upload file` steps resolve a relative local path against; \
+                      unset, the working directory",
         example: Some("features/files"),
     },
 ];
