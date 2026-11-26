@@ -106,7 +106,7 @@ cargo test --locked --lib
 The end-to-end suite needs a `bddkit` binary and an S3 server; `docker-compose.yml` runs [Garage](https://garagehq.deuxfleurs.fr/). The host must speak plugin ABI 4 (bddkit 0.5.0 or newer):
 
 ```bash
-cargo install --git https://github.com/bddkit/bddkit --tag v0.5.0 --locked bddkit
+cargo install --git https://github.com/bddkit/bddkit --tag v0.6.0 --locked bddkit
 docker compose up --wait garage
 cargo test --locked --test e2e
 ```
